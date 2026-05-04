@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { hash } from "bcryptjs";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const session = await auth();
 
