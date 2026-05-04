@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 
+export const dynamic = "force-dynamic";
+
 const patchTaskSchema = z.object({
   status: z.enum(["pending", "in_progress", "done"]).optional(),
   deadline: z.coerce.date().optional(),
@@ -10,7 +12,7 @@ const patchTaskSchema = z.object({
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   const session = await auth();
 
@@ -32,19 +34,25 @@ export async function GET(
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
-    if (session.user.role === "intern" && task.assignedToId !== session.user.id) {
+    if (
+      session.user.role === "intern" &&
+      task.assignedToId !== session.user.id
+    ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     return NextResponse.json(task);
   } catch {
-    return NextResponse.json({ error: "Failed to fetch task" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch task" },
+      { status: 500 },
+    );
   }
 }
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   const session = await auth();
 
@@ -83,17 +91,20 @@ export async function PATCH(
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid input", details: error.errors },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update task" },
+      { status: 500 },
+    );
   }
 }
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   const session = await auth();
 
@@ -121,6 +132,9 @@ export async function DELETE(
     return NextResponse.json({ message: "Task deleted" });
   } catch (error) {
     console.error("Delete error:", error);
-    return NextResponse.json({ error: "Failed to delete task" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete task" },
+      { status: 500 },
+    );
   }
 }
