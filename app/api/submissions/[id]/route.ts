@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { auth } = await import("@/auth");
+  const { prisma } = await import("@/lib/db");
+
+  const { id } = await params;
   const session = await auth();
   if (!session || session.user.role !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -18,7 +20,7 @@ export async function PATCH(
     const { status, feedback, reopen } = body;
 
     const existing = await prisma.taskSubmission.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
     if (!existing) {
       return NextResponse.json(
@@ -31,7 +33,7 @@ export async function PATCH(
       const updated = await prisma.$transaction(
         async (tx) => {
           const submission = await tx.taskSubmission.update({
-            where: { id: params.id },
+            where: { id: id },
             data: {
               status: "needs-revision",
               feedback: feedback ?? existing.feedback,
@@ -61,7 +63,7 @@ export async function PATCH(
     const updated = await prisma.$transaction(
       async (tx) => {
         const submission = await tx.taskSubmission.update({
-          where: { id: params.id },
+          where: { id: id },
           data: {
             status: status ?? existing.status,
             feedback: feedback ?? existing.feedback,

@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -12,8 +10,12 @@ const patchTaskSchema = z.object({
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
+  const { auth } = await import("@/auth");
+  const { prisma } = await import("@/lib/db");
+
   const session = await auth();
 
   if (!session) {
@@ -22,7 +24,7 @@ export async function GET(
 
   try {
     const task = await prisma.task.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         assignedTo: {
           select: { id: true, name: true, email: true, role: true },
@@ -52,8 +54,12 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
+  const { auth } = await import("@/auth");
+  const { prisma } = await import("@/lib/db");
+
   const session = await auth();
 
   if (!session) {
@@ -61,7 +67,7 @@ export async function PATCH(
   }
 
   const task = await prisma.task.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!task) {
@@ -77,7 +83,7 @@ export async function PATCH(
     const validated = patchTaskSchema.parse(body);
 
     const updated = await prisma.task.update({
-      where: { id: params.id },
+      where: { id },
       data: validated,
       include: {
         assignedTo: {
@@ -104,8 +110,12 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
+  const { auth } = await import("@/auth");
+  const { prisma } = await import("@/lib/db");
+
   const session = await auth();
 
   if (!session) {
@@ -118,7 +128,7 @@ export async function DELETE(
 
   try {
     const existing = await prisma.task.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existing) {
@@ -126,7 +136,7 @@ export async function DELETE(
     }
 
     await prisma.task.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: "Task deleted" });
