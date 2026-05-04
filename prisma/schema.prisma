@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  password      String
+  role          String   @default("intern")
+  createdAt     DateTime @default(now())
+
+  assignedTasks Task[]
+  submissions   TaskSubmission[]
+
+  @@map("users")
+}
+
+model Task {
+  id            String    @id @default(uuid())
+  title         String
+  description   String?
+  status        String    @default("pending")
+  deadline      DateTime?
+  createdAt     DateTime  @default(now())
+  reopenedAt    DateTime?
+  attachments   Json?
+
+  assignedToId  String
+  assignedTo    User      @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  submissions   TaskSubmission[]
+
+  @@index([assignedToId])
+  @@index([status])
+  @@map("tasks")
+}
+
+model TaskSubmission {
+  id          String   @id @default(uuid())
+  taskId      String
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  internId    String
+  intern      User     @relation(fields: [internId], references: [id], onDelete: Cascade)
+  notes       String?
+  attachments Json
+  status      String   @default("submitted")
+  feedback    String?
+  submittedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([taskId])
+  @@index([internId])
+  @@map("task_submissions")
+}
