@@ -1,4 +1,3 @@
-import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma, withRetry } from "@/lib/db";
 import { StatCard } from "@/components/stat-card";
@@ -6,9 +5,10 @@ import { StatCard } from "@/components/stat-card";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const { auth } = await import("@/auth");
   const session = await auth();
 
-  if (!session) {
+  if (!session?.user) {
     redirect("/login");
   }
 
